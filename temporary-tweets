@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+import sys
+import twitter
+from os import environ as env
+
+
+def remove_tweets(api, pinned_status=0):
+    status_list = filter(lambda x: x > 0 and x != pinned_status,
+                         map(lambda y: y.id, api.GetUserTimeline(count=300)))
+    map(lambda t: api.DestroyStatus(t), status_list)
+
+
+if __name__ == "__main__":
+    if not ("CONSUMER_KEY" in env and
+            "CONSUMER_SECRET" in env and
+            "ACCESS_TOKEN_KEY" in env and
+            "ACCESS_TOKEN_SECRET" in env):
+        sys.stderr.write("Twitter API credentials not set.")
+        sys.exit(1)
+    else:
+        api = twitter.Api(
+            env.get('CONSUMER_KEY'),
+            env.get('CONSUMER_SECRET'),
+            env.get('ACCESS_TOKEN_KEY'),
+            env.get('ACCESS_TOKEN_SECRET')
+        )
+        pinned_status = env.get("PINNED_STATUS", 0)
+        remove_tweets(api, int(pinned_status))

@@ -1,0 +1,9 @@
+version: '3.1'
+services:
+  twitter:
+    build: .
+    image: lvm-temporary-tweets
+    restart: unless-stopped
+    container_name: temporary-tweets
+    command: temporary-tweets
+    env_file: docker.env
