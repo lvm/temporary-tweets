@@ -48,3 +48,4 @@ if __name__ == "__main__":
         timeline = get_timeline(api, int(pinned_status))
         backup_tweets(timeline)
         remove_tweets(timeline)
+        sys.exit(0)
