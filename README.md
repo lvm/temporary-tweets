@@ -4,6 +4,20 @@ friendly tool to remove twitter statuses.
 
 ## usage
 
+first create a file named `docker.env` with this content:
+
+```
+ACCESS_TOKEN_KEY=...
+ACCESS_TOKEN_SECRET=...
+CONSUMER_KEY=...
+CONSUMER_SECRET=...
+PINNED_STATUS=...
+```
+
+> note that `PINNED_STATUS` is not mandatory, if you don't have one, you can ignore this variable.
+
+then:
+
 ```
 docker-compose run --rm twitter
 ```
