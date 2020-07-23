@@ -3,8 +3,16 @@
 import sys
 import json
 import twitter
+import argparse
 from datetime import datetime as dt
 from os import environ as env
+
+
+USER_ID = env.get("TWITTER_USER_ID")
+CONSUMER_KEY = env.get("TWITTER_CONSUMER_KEY")
+CONSUMER_SECRET = env.get("TWITTER_CONSUMER_SECRET")
+ACCESS_TOKEN_KEY = env.get("TWITTER_ACCESS_TOKEN_KEY")
+ACCESS_TOKEN_SECRET = env.get("TWITTER_ACCESS_TOKEN_SECRET")
 
 
 def today():
@@ -12,40 +20,72 @@ def today():
 
 
 def get_timeline(api=None, pinned_status=0):
-    return list(filter(lambda x: pinned_status > 0 and x.id != pinned_status,
-                       map(lambda y: y, api.GetUserTimeline(count=300))))
+    return api.GetUserTimeline(count=300)
+
+
+def can_remove_replies(status={}):
+    return status.in_reply_to_user_id
+
+
+def can_remove_favs(status={}):
+    return status.favorited
 
 
 def backup_tweets(timeline=[]):
     date = today()
-    with open(f"timeline-{date}.json", 'w+') as j:
+    with open(f"timeline-{date}.json", "w+") as j:
         for status in timeline:
             j.write(json.dumps(status._json))
-            j.write('\n')
+            j.write("\n")
 
 
-def remove_tweets(timeline=[]):
+def remove_tweets(timeline=[], favorites=False, replies=False, dry_run=False):
     for status in timeline:
-        api.DestroyStatus(int(status.id))
-        print (f"-> Removed {status.id}")
+        rm_fav = can_remove_favs(status)
+        rm_reply = can_remove_replies(status)
+        can_remove = (not rm_fav or favorites) and (not rm_reply or replies)
+
+        if can_remove:
+            if not dry_run:
+                api.DestroyStatus(int(status.id))
+            print(f"-> Removed: {status.id} - {status.text}")
+        else:
+            print(f"-> Stays: {status.id} - {status.text}")
 
 
 if __name__ == "__main__":
-    if not ("CONSUMER_KEY" in env and
-            "CONSUMER_SECRET" in env and
-            "ACCESS_TOKEN_KEY" in env and
-            "ACCESS_TOKEN_SECRET" in env):
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--replies-included",
+        action="store_true",
+        default=False,
+        help="Will remove all posts, Replies included (Default: False).",
+    )
+    parser.add_argument(
+        "--fav-included",
+        action="store_true",
+        default=False,
+        help="Will remove all posts, Favorited included (Default: False).",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", default=False, help="Just simulate."
+    )
+
+    args = parser.parse_args()
+
+    if not (
+        "TWITTER_CONSUMER_KEY" in env
+        and "TWITTER_CONSUMER_SECRET" in env
+        and "TWITTER_ACCESS_TOKEN_KEY" in env
+        and "TWITTER_ACCESS_TOKEN_SECRET" in env
+    ):
         sys.stderr.write("Twitter API credentials not set.")
         sys.exit(1)
     else:
         api = twitter.Api(
-            env.get('CONSUMER_KEY'),
-            env.get('CONSUMER_SECRET'),
-            env.get('ACCESS_TOKEN_KEY'),
-            env.get('ACCESS_TOKEN_SECRET')
+            CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET
         )
-        pinned_status = env.get("PINNED_STATUS", 0)
-        timeline = get_timeline(api, int(pinned_status))
+        timeline = get_timeline(api)
         backup_tweets(timeline)
-        remove_tweets(timeline)
+        remove_tweets(timeline, args.fav_included, args.replies_included, args.dry_run)
         sys.exit(0)
