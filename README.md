@@ -4,23 +4,27 @@ friendly tool to remove twitter statuses.
 
 ## usage
 
-first create a file named `docker.env` with this content:
+Save your credentials to an env file (that is, `docker.env` or your `~/.bashrc`, for example).
 
 ```
-ACCESS_TOKEN_KEY=...
-ACCESS_TOKEN_SECRET=...
-CONSUMER_KEY=...
-CONSUMER_SECRET=...
-PINNED_STATUS=...
+TWITTER_ACCESS_TOKEN_KEY=...
+TWITTER_ACCESS_TOKEN_SECRET=...
+TWITTER_CONSUMER_KEY=...
+TWITTER_CONSUMER_SECRET=...
 ```
-
-> note that `PINNED_STATUS` is not mandatory, if you don't have one, you can ignore this variable.
 
 then:
 
 ```
 docker-compose run --rm twitter
 ```
+or
+
+```
+temporary-tweets
+```
+
+by default, will NOT remove (self-)favorited and replies posts but it is possible to pass two arguments: `--fav-included` and/or `--replies-included`, which will override this default behavior.
 
 ## license
 
