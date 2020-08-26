@@ -40,17 +40,25 @@ def backup_tweets(timeline=[]):
 
 
 def remove_tweets(timeline=[], favorites=False, replies=False, dry_run=False):
-    for status in timeline:
+    to_be_removed = []
+    for status in timeline[::-1]:
         rm_fav = can_remove_favs(status)
         rm_reply = can_remove_replies(status)
-        can_remove = (not rm_fav or favorites) and (not rm_reply or replies)
+        can_remove = (
+            (not rm_fav or favorites)
+            and (not rm_reply or replies)
+            or status.in_reply_to_status_id in to_be_removed
+        )
 
         if can_remove:
-            if not dry_run:
-                api.DestroyStatus(int(status.id))
+            to_be_removed += [status.id]
             print(f"-> Removed: {status.id} - {status.text}")
         else:
             print(f"-> Stays: {status.id} - {status.text}")
+
+    if not dry_run:
+        for _id in to_be_removed:
+            api.DestroyStatus(int(_id))
 
 
 if __name__ == "__main__":
